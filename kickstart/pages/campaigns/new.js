@@ -19,11 +19,13 @@ class CampaignNew extends Component {
 
     try {
       const accounts = await web3.eth.getAccounts();
+      console.log( accounts)
       await factory.methods
         .createCampaign(this.state.minimumContribution)
         .send({
           from: accounts[0]
         });
+      console.log(accounts[0])
 
       Router.pushRoute('/');
     } catch (err) {
