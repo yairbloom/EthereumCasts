@@ -3,8 +3,8 @@ pragma solidity ^0.4.17;
 contract CampaignFactory {
     address[] public deployedCampaigns;
 
-    function createCampaign(uint minimum) public {
-        address newCampaign = new Campaign(minimum, msg.sender);
+    function createCampaign(address peer , string _Subject , string _Description) public {
+        address newCampaign = new Campaign(msg.sender , peer , _Subject , _Description);
         deployedCampaigns.push(newCampaign);
     }
 
@@ -14,83 +14,36 @@ contract CampaignFactory {
 }
 
 contract Campaign {
-    struct Request {
-        string description;
-        uint value;
-        address recipient;
-        bool complete;
-        uint approvalCount;
-        mapping(address => bool) approvals;
-    }
-
-    Request[] public requests;
-    address public manager;
-    uint public minimumContribution;
-    mapping(address => bool) public approvers;
-    uint public approversCount;
+    address public peer1;
+    address public peer2;
+    string public Subject;
+    string public Description;
+    uint256 public TotalBalance;
 
     modifier restricted() {
-        require(msg.sender == manager);
+        require(msg.sender == peer1 || msg.sender == peer2);
         _;
     }
 
-    function Campaign(uint minimum, address creator) public {
-        manager = creator;
-        minimumContribution = minimum;
+    function Campaign(address creator , address peer , string _Subject , string _Description) public {
+        peer1 = creator;
+        peer2 = peer;
+        Subject = _Subject;
+        Description = _Description;
+        TotalBalance = 0;
     }
 
-    function contribute() public payable {
-        require(msg.value > minimumContribution);
 
-        approvers[msg.sender] = true;
-        approversCount++;
+    function MoveToCampaign() public payable {
+        TotalBalance = TotalBalance + msg.value;
     }
 
-    function createRequest(string description, uint value, address recipient) public restricted {
-        Request memory newRequest = Request({
-           description: description,
-           value: value,
-           recipient: recipient,
-           complete: false,
-           approvalCount: 0
-        });
+    function finalize() public restricted {
 
-        requests.push(newRequest);
-    }
-
-    function approveRequest(uint index) public {
-        Request storage request = requests[index];
-
-        require(approvers[msg.sender]);
-        require(!request.approvals[msg.sender]);
-
-        request.approvals[msg.sender] = true;
-        request.approvalCount++;
-    }
-
-    function finalizeRequest(uint index) public restricted {
-        Request storage request = requests[index];
-
-        require(request.approvalCount > (approversCount / 2));
-        require(!request.complete);
-
-        request.recipient.transfer(request.value);
-        request.complete = true;
-    }
-
-    function getSummary() public view returns (
-      uint, uint, uint, uint, address
-      ) {
-        return (
-          minimumContribution,
-          this.balance,
-          requests.length,
-          approversCount,
-          manager
-        );
-    }
-
-    function getRequestsCount() public view returns (uint) {
-        return requests.length;
+        if (msg.sender == peer1)
+          peer2.transfer(TotalBalance);
+        if (msg.sender == peer2)
+          peer1.transfer(TotalBalance);
+        TotalBalance = 0;
     }
 }
