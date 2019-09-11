@@ -11,51 +11,48 @@ class CampaignShow extends Component {
     const campaign = Campaign(props.query.address);
 
     const summary = await campaign.methods.getSummary().call();
+    const subject = await campaign.methods.Subject().call();
+    const description = await campaign.methods.Description().call();
 
     return {
       address: props.query.address,
-      minimumContribution: summary[0],
-      balance: summary[1],
-      requestsCount: summary[2],
-      approversCount: summary[3],
-      manager: summary[4]
+      Peer1: summary[0],
+      Peer2: summary[1],
+      Subject: subject,
+      Description: description,
+      balance: summary[2]
     };
   }
 
   renderCards() {
     const {
       balance,
-      manager,
-      minimumContribution,
-      requestsCount,
-      approversCount
+      Peer1,
+      Peer2,
+      Subject,
+      Description
     } = this.props;
 
     const items = [
       {
-        header: manager,
-        meta: 'Address of Manager',
+        header: Peer1,
+        meta: 'Address of first account',
         description:
           'The manager created this campaign and can create requests to withdraw money',
         style: { overflowWrap: 'break-word' }
       },
       {
-        header: minimumContribution,
-        meta: 'Minimum Contribution (wei)',
+        header: Peer2,
+        meta: 'Address of secend account',
         description:
-          'You must contribute at least this much wei to become an approver'
+          'You must contribute at least this much wei to become an approver',
+        style: { overflowWrap: 'break-word' }
       },
       {
-        header: requestsCount,
-        meta: 'Number of Requests',
-        description:
-          'A request tries to withdraw money from the contract. Requests must be approved by approvers'
-      },
-      {
-        header: approversCount,
-        meta: 'Number of Approvers',
-        description:
-          'Number of people who have already donated to this campaign'
+        header: Subject,
+        meta: 'Summary of this contract',
+        description: Description,
+        style: { overflowWrap: 'break-word' }
       },
       {
         header: web3.utils.fromWei(balance, 'ether'),
@@ -67,6 +64,16 @@ class CampaignShow extends Component {
 
     return <Card.Group items={items} />;
   }
+
+  onFinalize = async () => {
+    const campaign = Campaign(this.props.address);
+
+    const accounts = await web3.eth.getAccounts();
+    await campaign.methods.finalize().send({
+      from: accounts[0]
+    });
+  };
+
 
   render() {
     return (
@@ -80,16 +87,14 @@ class CampaignShow extends Component {
               <ContributeForm address={this.props.address} />
             </Grid.Column>
           </Grid.Row>
-
           <Grid.Row>
-            <Grid.Column>
-              <Link route={`/campaigns/${this.props.address}/requests`}>
-                <a>
-                  <Button primary>View Requests</Button>
-                </a>
-              </Link>
+            <Grid.Column width={16}>
+            <Button color="teal" basic onClick={this.onFinalize}>
+              Finalize
+            </Button>
             </Grid.Column>
           </Grid.Row>
+
         </Grid>
       </Layout>
     );

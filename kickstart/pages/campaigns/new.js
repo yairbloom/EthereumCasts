@@ -7,7 +7,9 @@ import { Router } from '../../routes';
 
 class CampaignNew extends Component {
   state = {
-    minimumContribution: '',
+    PeerAdress: '',
+    Subject: '',
+    Description: '',
     errorMessage: '',
     loading: false
   };
@@ -21,7 +23,7 @@ class CampaignNew extends Component {
       const accounts = await web3.eth.getAccounts();
       console.log( accounts)
       await factory.methods
-        .createCampaign(this.state.minimumContribution)
+        .createCampaign(this.state.PeerAdress , this.state.Subject , this.state.Description)
         .send({
           from: accounts[0]
         });
@@ -42,13 +44,26 @@ class CampaignNew extends Component {
 
         <Form onSubmit={this.onSubmit} error={!!this.state.errorMessage}>
           <Form.Field>
-            <label>Minimum Contribution</label>
+            <label>Peer Acount</label>
             <Input
               label="wei"
               labelPosition="right"
-              value={this.state.minimumContribution}
+              value={this.state.PeerAdress}
               onChange={event =>
-                this.setState({ minimumContribution: event.target.value })}
+                this.setState({ PeerAdress: event.target.value })}
+            />
+            <label>Subject</label>
+            <Input
+              value={this.state.Subject}
+              onChange={event =>
+                this.setState({ Subject: event.target.value })}
+            />
+
+            <label>Description</label>
+            <Input
+              value={this.state.Description}
+              onChange={event =>
+                this.setState({ Description: event.target.value })}
             />
           </Form.Field>
 
